@@ -1,0 +1,18 @@
+# Source files
+src/
+tests/
+
+# Config files
+.gitignore
+.npmignore
+tsconfig.json
+.github/
+
+# Coverage output
+coverage/
+
+# Node modules (already ignored by default by npm, but good to list)
+node_modules/
+
+# Other dev files
+*.log

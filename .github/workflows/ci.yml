@@ -1,0 +1,45 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x] # Test on multiple Node.js versions
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm' # Cache npm dependencies
+
+    - name: Install dependencies
+      run: npm ci # Use ci for cleaner installs in CI
+
+    - name: Run linters (optional - placeholder)
+      # run: npm run lint # Add this if you set up ESLint later
+
+    - name: Run tests
+      run: npm test
+
+    - name: Build project
+      run: npm run build
+      
+    # Optional: Upload coverage reports (e.g., to Codecov)
+    # - name: Upload coverage to Codecov
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     token: ${{ secrets.CODECOV_TOKEN }} # If using Codecov
+    #     files: ./coverage/clover.xml # Or lcov.info
+    #     fail_ci_if_error: true
