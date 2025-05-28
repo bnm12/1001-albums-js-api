@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "albums-generator-client",
   "version": "1.0.0",
   "private": false,
   "description": "A typescript typed JS api client for 1001 albums",

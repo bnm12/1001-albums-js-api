@@ -6,25 +6,25 @@ A typescript typed JS api client for 1001 albums
 You can install the package using npm:
 
 ```bash
-npm install app
+npm install albums-generator-client
 ```
 
 ## Usage
 
-First, import the `ApiClient` from the package:
+First, import the `AlbumsGeneratorClient` from the package:
 
 ```typescript
-import { ApiClient } from 'app'; // Assuming 'app' is the package name
+import { AlbumsGeneratorClient } from 'albums-generator-client';
 ```
 
 You can then instantiate the client. By default, it connects to `https://1001albumsgenerator.com/api/v1`. You can optionally provide a different base URL:
 
 ```typescript
 // Default base URL
-const client = new ApiClient();
+const client = new AlbumsGeneratorClient();
 
 // Custom base URL
-// const customClient = new ApiClient('https://your-api-domain.com/api/v1');
+// const customClient = new AlbumsGeneratorClient('https://your-api-domain.com/api/v1');
 ```
 
 Here are examples of how to use the available methods. All methods return a `Promise<unknown>`. You'll need to inspect the response or refer to the API documentation for the specific structure of the data returned.
