@@ -95,9 +95,7 @@ export interface AlbumInGroup { // Corrected: Removed generics S and U
   reviews: AlbumReview[];
 }
 
-export interface ProjectHistoryAlbum extends Album {
-  // No additional fields from history.album compared to base Album
-}
+export type ProjectHistoryAlbum = Album;
 
 export type AlbumRating = 1 | 2 | 3 | 4 | 5 | 'did-not-listen' | null;
 
