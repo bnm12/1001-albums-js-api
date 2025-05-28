@@ -4,10 +4,12 @@ export interface Image {
   width: number;
 }
 
+export type ArtistOrigin = 'us' | 'uk' | 'other' | string;
+
 export interface Album {
   uuid: string;
   artist: string;
-  artistOrigin: string | null;
+  artistOrigin: ArtistOrigin | null;
   images: Image[];
   genres: string[];
   subGenres: string[] | null; // project.history.album.subGenres is null
@@ -18,7 +20,7 @@ export interface Album {
   wikipediaUrl: string | null;
   spotifyId: string | null;
   appleMusicId: string | null;
-  tidalId: number | string | null; // Seen as number in getGroup, string in getAlbumStats
+  tidalId: string | null; // Corrected: Was number | string | null, now string | null
   amazonMusicId: string | null;
   youtubeMusicId: string | null;
   qobuzId: string | null;
@@ -27,8 +29,8 @@ export interface Album {
 
 export interface AlbumWithRating extends Album {
   votes: number;
-  totalRating: number;
-  averageRating: number;
+  totalRating: number; // Stays as number, 'did-not-listen' is not in getGroup for this
+  averageRating: number; // Stays as number
   listenedAt: string; // Assuming ISO date string
 }
 
@@ -38,7 +40,7 @@ export interface Member {
 }
 
 export interface FilteredSelection {
-  selections: string[]; // Assuming string array, might need more specific type if structure is known
+  selections: string[];
   genres: string[];
 }
 
@@ -55,19 +57,22 @@ export interface DecadeVote {
   totalRating: number;
   votes: number;
   numberOfAlbums: number;
+  /** Expected format e.g., "1970", "1980", "1990", "2010". Matches regex /(19|20)\d\d/ */
   decade: string;
   rating: number;
 }
+
+export type UpdateFrequencyType = 'dailyWithWeekends' | 'daily';
 
 export interface Group<T extends string | undefined = undefined> {
   name: string;
   slug: T extends string ? T : string;
   paused: boolean;
   members: Member[];
-  updateFrequency: string; // Consider enum if possible values are known
+  updateFrequency: UpdateFrequencyType;
   filteredSelection: FilteredSelection;
-  currentAlbum: Album | null; // currentAlbum can be null
-  latestAlbum: Album | null; // latestAlbum can be null
+  currentAlbum: Album | null;
+  latestAlbum: Album | null;
   highestRatedAlbums: AlbumWithRating[];
   lowestRatedAlbums: AlbumWithRating[];
   favoriteGenres: GenreVote[];
@@ -75,7 +80,7 @@ export interface Group<T extends string | undefined = undefined> {
   ratingByDecade: DecadeVote[];
   numberOfGeneratedAlbums: number;
   totalVotes: number;
-  averageRating: number | null; // Can be null if totalVotes is 0
+  averageRating: number | null;
 }
 
 export interface AlbumReview {
@@ -84,31 +89,32 @@ export interface AlbumReview {
   review: string | null;
 }
 
-export interface AlbumInGroup<S extends string | undefined = undefined, U extends string | undefined = undefined> {
-  albumName: S extends string ? S : string;
-  albumArtist: U extends string ? U : string;
+export interface AlbumInGroup { // Corrected: Removed generics S and U
+  albumName: string;
+  albumArtist: string;
   reviews: AlbumReview[];
 }
 
 export interface ProjectHistoryAlbum extends Album {
   // No additional fields from history.album compared to base Album
-  // but subGenres can be null
 }
+
+export type AlbumRating = 1 | 2 | 3 | 4 | 5 | 'did-not-listen' | null;
 
 export interface ProjectHistoryEntry {
   album: ProjectHistoryAlbum;
-  rating: number | string | null; // rating can be "did-not-listen" or number or null
-  review?: string | null; // review can be missing or null
+  rating: AlbumRating; // Corrected: Uses the new AlbumRating type
+  review?: string | null;
   revealedAlbum: boolean;
   generatedAt: string; // Assuming ISO date string
-  globalRating: number | null; // Can be null
+  globalRating: number | null;
 }
 
 export interface Project<P extends string | undefined = undefined> {
   shareableUrl: string | null;
   currentAlbum: Album | null;
   currentAlbumNotes: string | null;
-  updateFrequency: string; // Consider enum if possible values are known
+  updateFrequency: UpdateFrequencyType;
   paused: boolean;
   history: ProjectHistoryEntry[];
   name: P extends string ? P : string;
@@ -133,8 +139,8 @@ export interface AlbumStats {
 }
 
 export interface UserAlbumStatEntry {
-  album: Album; // Uses the common Album structure
-  rating: number | null;
+  album: Album;
+  rating: number | null; // This rating is distinct from ProjectHistoryEntry.rating
   review: string | null;
   listenedAt: string; // Assuming ISO date string
 }
@@ -143,5 +149,5 @@ export interface UserAlbumStats {
   name: string;
   stats: UserAlbumStatEntry[];
   totalVotes: number;
-  averageRating: number | null; // Can be null if totalVotes is 0
+  averageRating: number | null;
 }
