@@ -15,8 +15,16 @@
     "type": "git",
     "url": "git+https://github.com/bnm12/1001-albums-js-api.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "1001-albums",
+    "1001-albums-generator",
+    "albums-generator-api",
+    "api-client",
+    "music",
+    "albums",
+    "typescript"
+  ],
+  "author": "bnm12",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/bnm12/1001-albums-js-api/issues"
