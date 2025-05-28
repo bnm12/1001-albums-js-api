@@ -294,9 +294,11 @@ describe('ApiClient', () => {
       const errorMessage = 'Network Error';
       mockAxiosInstance.get.mockRejectedValue(new Error(errorMessage));
 
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       await expect(client.getGroup(groupSlug)).rejects.toThrow(errorMessage);
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
       expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/groups/${groupSlug}`);
+      consoleErrorSpy.mockRestore();
     });
 
     it('should use the default baseURL if none is provided', () => {
@@ -364,9 +366,11 @@ describe('ApiClient', () => {
       const errorMessage = 'API Error';
       mockAxiosInstance.get.mockRejectedValue(new Error(errorMessage));
 
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       await expect(client.getAlbumInGroup(groupSlug, albumUuid)).rejects.toThrow(errorMessage);
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
       expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/groups/${groupSlug}/albums/${albumUuid}`);
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -452,9 +456,11 @@ describe('ApiClient', () => {
       const errorMessage = 'API Error';
       mockAxiosInstance.get.mockRejectedValue(new Error(errorMessage));
 
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       await expect(client.getProject(projectIdentifier)).rejects.toThrow(errorMessage);
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
       expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/projects/${projectIdentifier}`);
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -500,9 +506,11 @@ describe('ApiClient', () => {
       const errorMessage = 'API Error';
       mockAxiosInstance.get.mockRejectedValue(new Error(errorMessage));
 
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       await expect(client.getAlbumStats()).rejects.toThrow(errorMessage);
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/albums/stats');
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -547,9 +555,11 @@ describe('ApiClient', () => {
       const errorMessage = 'API Error';
       mockAxiosInstance.get.mockRejectedValue(new Error(errorMessage));
 
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       await expect(client.getUserAlbumStats()).rejects.toThrow(errorMessage);
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/user-albums/stats');
+      consoleErrorSpy.mockRestore();
     });
   });
 
