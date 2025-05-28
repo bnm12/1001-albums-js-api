@@ -11,24 +11,104 @@ npm install app
 
 ## Usage
 
-Here's a basic example of how to use the library:
+First, import the `ApiClient` from the package:
 
 ```typescript
-// Import the client
-import { ApiClient } from 'app'; // Or whatever the main export is
+import { ApiClient } from 'app'; // Assuming 'app' is the package name
+```
 
-// Initialize the client (if necessary)
-// const client = new ApiClient(); // This depends on the library's design
+You can then instantiate the client. By default, it connects to `https://1001albumsgenerator.com/api/v1`. You can optionally provide a different base URL:
 
-// Example usage (replace with actual library functionality)
-// async function fetchData() {
-//   try {
-//     const data = await client.someMethod();
-//     console.log(data);
-//   } catch (error) {
-//     console.error('Error fetching data:', error);
-//   }
-// }
+```typescript
+// Default base URL
+const client = new ApiClient();
 
-// fetchData();
+// Custom base URL
+// const customClient = new ApiClient('https://your-api-domain.com/api/v1');
+```
+
+Here are examples of how to use the available methods. All methods return a `Promise<unknown>`. You'll need to inspect the response or refer to the API documentation for the specific structure of the data returned.
+
+### Get Group Details
+
+```typescript
+async function fetchGroupDetails(groupSlug: string) {
+  try {
+    const groupData = await client.getGroup(groupSlug);
+    console.log('Group Data:', groupData);
+    // Example: Accessing a property (replace with actual property names)
+    // if (groupData && typeof groupData === 'object' && 'name' in groupData) {
+    //   console.log('Group Name:', (groupData as { name: string }).name);
+    // }
+  } catch (error) {
+    console.error(`Error fetching group ${groupSlug}:`, error);
+  }
+}
+
+// Example call
+// fetchGroupDetails('some-group-slug');
+```
+
+### Get Album in Group
+
+```typescript
+async function fetchAlbumInGroup(groupSlug: string, albumUuid: string) {
+  try {
+    const albumData = await client.getAlbumInGroup(groupSlug, albumUuid);
+    console.log('Album Data:', albumData);
+  } catch (error) {
+    console.error(`Error fetching album ${albumUuid} in group ${groupSlug}:`, error);
+  }
+}
+
+// Example call
+// fetchAlbumInGroup('some-group-slug', 'some-album-uuid');
+```
+
+### Get Project Details
+
+```typescript
+async function fetchProjectDetails(projectIdentifier: string) {
+  try {
+    const projectData = await client.getProject(projectIdentifier);
+    console.log('Project Data:', projectData);
+  } catch (error) {
+    console.error(`Error fetching project ${projectIdentifier}:`, error);
+  }
+}
+
+// Example call
+// fetchProjectDetails('some-project-id');
+```
+
+### Get Album Stats
+
+```typescript
+async function fetchAlbumStats() {
+  try {
+    const stats = await client.getAlbumStats();
+    console.log('Album Stats:', stats);
+  } catch (error) {
+    console.error('Error fetching album stats:', error);
+  }
+}
+
+// Example call
+// fetchAlbumStats();
+```
+
+### Get User Album Stats
+
+```typescript
+async function fetchUserAlbumStats() {
+  try {
+    const userStats = await client.getUserAlbumStats();
+    console.log('User Album Stats:', userStats);
+  } catch (error) {
+    console.error('Error fetching user album stats:', error);
+  }
+}
+
+// Example call
+// fetchUserAlbumStats();
 ```
