@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { Group, AlbumInGroup, Project, AlbumStats, UserAlbumStats } from './types';
 
 const DEFAULT_BASE_URL = 'https://1001albumsgenerator.com/api/v1';
 
@@ -39,10 +40,10 @@ export class AlbumsGeneratorClient {
     });
   }
 
-  public async getGroup(groupSlug: string): Promise<unknown> {
+  public async getGroup(groupSlug: string): Promise<Group<typeof groupSlug>> {
     await this.handleRateLimit();
     try {
-      const response = await this.axiosInstance.get(`/groups/${groupSlug}`);
+      const response = await this.axiosInstance.get<Group<typeof groupSlug>>(`/groups/${groupSlug}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching group ${groupSlug}:`, error);
@@ -51,10 +52,10 @@ export class AlbumsGeneratorClient {
     }
   }
 
-  public async getAlbumInGroup(groupSlug: string, albumUuid: string): Promise<unknown> {
+  public async getAlbumInGroup(groupSlug: string, albumUuid: string): Promise<AlbumInGroup> {
     await this.handleRateLimit();
     try {
-      const response = await this.axiosInstance.get(`/groups/${groupSlug}/albums/${albumUuid}`);
+      const response = await this.axiosInstance.get<AlbumInGroup>(`/groups/${groupSlug}/albums/${albumUuid}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching album ${albumUuid} in group ${groupSlug}:`, error);
@@ -63,10 +64,10 @@ export class AlbumsGeneratorClient {
     }
   }
 
-  public async getProject(projectIdentifier: string): Promise<unknown> {
+  public async getProject(projectIdentifier: string): Promise<Project<typeof projectIdentifier>> {
     await this.handleRateLimit();
     try {
-      const response = await this.axiosInstance.get(`/projects/${projectIdentifier}`);
+      const response = await this.axiosInstance.get<Project<typeof projectIdentifier>>(`/projects/${projectIdentifier}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching project ${projectIdentifier}:`, error);
@@ -75,10 +76,10 @@ export class AlbumsGeneratorClient {
     }
   }
 
-  public async getAlbumStats(): Promise<unknown> {
+  public async getAlbumStats(): Promise<AlbumStats> {
     await this.handleRateLimit();
     try {
-      const response = await this.axiosInstance.get('/albums/stats');
+      const response = await this.axiosInstance.get<AlbumStats>('/albums/stats');
       return response.data;
     } catch (error) {
       console.error('Error fetching album stats:', error);
@@ -87,10 +88,10 @@ export class AlbumsGeneratorClient {
     }
   }
 
-  public async getUserAlbumStats(): Promise<unknown> {
+  public async getUserAlbumStats(): Promise<UserAlbumStats> {
     await this.handleRateLimit();
     try {
-      const response = await this.axiosInstance.get('/user-albums/stats');
+      const response = await this.axiosInstance.get<UserAlbumStats>('/user-albums/stats');
       return response.data;
     } catch (error) {
       console.error('Error fetching user album stats:', error);

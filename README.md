@@ -14,7 +14,7 @@ npm install albums-generator-client
 First, import the `AlbumsGeneratorClient` from the package:
 
 ```typescript
-import { AlbumsGeneratorClient } from 'albums-generator-client';
+import { AlbumsGeneratorClient, Group, AlbumInGroup, Project, AlbumStats, UserAlbumStats } from 'albums-generator-client';
 ```
 
 You can then instantiate the client. By default, it connects to `https://1001albumsgenerator.com/api/v1`. You can optionally provide a different base URL:
@@ -27,26 +27,30 @@ const client = new AlbumsGeneratorClient();
 // const customClient = new AlbumsGeneratorClient('https://your-api-domain.com/api/v1');
 ```
 
-Here are examples of how to use the available methods. All methods return a `Promise<unknown>`. You'll need to inspect the response or refer to the API documentation for the specific structure of the data returned.
+Here are examples of how to use the available methods. These methods now return Promises with specific TypeScript types, providing type safety and autocompletion for the response data.
 
 ### Get Group Details
 
 ```typescript
 async function fetchGroupDetails(groupSlug: string) {
   try {
-    const groupData = await client.getGroup(groupSlug);
-    console.log('Group Data:', groupData);
-    // Example: Accessing a property (replace with actual property names)
-    // if (groupData && typeof groupData === 'object' && 'name' in groupData) {
-    //   console.log('Group Name:', (groupData as { name: string }).name);
-    // }
+    // The method returns Promise<Group<typeof groupSlug>>
+    // For simplicity in this example, we'll use Promise<Group>
+    const groupData: Group = await client.getGroup(groupSlug);
+    console.log('Group Name:', groupData.name);
+    if (groupData.currentAlbum) {
+      console.log('Current Album Artist:', groupData.currentAlbum.artist);
+    }
+    // You can now access properties of groupData with type safety.
+    // For example, to see the list of members:
+    // groupData.members.forEach(member => console.log(member.name));
   } catch (error) {
     console.error(`Error fetching group ${groupSlug}:`, error);
   }
 }
 
 // Example call
-// fetchGroupDetails('some-group-slug');
+// fetchGroupDetails('your-group-slug');
 ```
 
 ### Get Album in Group
@@ -54,15 +58,18 @@ async function fetchGroupDetails(groupSlug: string) {
 ```typescript
 async function fetchAlbumInGroup(groupSlug: string, albumUuid: string) {
   try {
-    const albumData = await client.getAlbumInGroup(groupSlug, albumUuid);
-    console.log('Album Data:', albumData);
+    const albumData: AlbumInGroup = await client.getAlbumInGroup(groupSlug, albumUuid);
+    console.log('Album Name:', albumData.albumName);
+    console.log('Album Artist:', albumData.albumArtist);
+    // Access reviews with type safety
+    // albumData.reviews.forEach(review => console.log(review.projectName, review.rating));
   } catch (error) {
     console.error(`Error fetching album ${albumUuid} in group ${groupSlug}:`, error);
   }
 }
 
 // Example call
-// fetchAlbumInGroup('some-group-slug', 'some-album-uuid');
+// fetchAlbumInGroup('your-group-slug', 'album-uuid');
 ```
 
 ### Get Project Details
@@ -70,15 +77,22 @@ async function fetchAlbumInGroup(groupSlug: string, albumUuid: string) {
 ```typescript
 async function fetchProjectDetails(projectIdentifier: string) {
   try {
-    const projectData = await client.getProject(projectIdentifier);
-    console.log('Project Data:', projectData);
+    // The method returns Promise<Project<typeof projectIdentifier>>
+    // For simplicity, we'll use Promise<Project>
+    const projectData: Project = await client.getProject(projectIdentifier);
+    console.log('Project Name:', projectData.name);
+    if (projectData.currentAlbum) {
+      console.log('Current Project Album:', projectData.currentAlbum.name);
+    }
+    // Access history with type safety
+    // projectData.history.forEach(entry => console.log(entry.album.name, entry.rating));
   } catch (error) {
     console.error(`Error fetching project ${projectIdentifier}:`, error);
   }
 }
 
 // Example call
-// fetchProjectDetails('some-project-id');
+// fetchProjectDetails('your-project-identifier');
 ```
 
 ### Get Album Stats
@@ -86,8 +100,13 @@ async function fetchProjectDetails(projectIdentifier: string) {
 ```typescript
 async function fetchAlbumStats() {
   try {
-    const stats = await client.getAlbumStats();
-    console.log('Album Stats:', stats);
+    const stats: AlbumStats = await client.getAlbumStats();
+    console.log('Total Album Stats Entries:', stats.stats.length);
+    if (stats.stats.length > 0) {
+      console.log('First Album Stat Entry Name:', stats.stats[0].albumName);
+    }
+    // Access individual stat entries with type safety
+    // stats.stats.forEach(stat => console.log(stat.albumName, stat.averageRating));
   } catch (error) {
     console.error('Error fetching album stats:', error);
   }
@@ -102,8 +121,11 @@ async function fetchAlbumStats() {
 ```typescript
 async function fetchUserAlbumStats() {
   try {
-    const userStats = await client.getUserAlbumStats();
-    console.log('User Album Stats:', userStats);
+    const userStats: UserAlbumStats = await client.getUserAlbumStats();
+    console.log('User Name for Stats:', userStats.name);
+    console.log('Total User Votes:', userStats.totalVotes);
+    // Access individual user album stat entries with type safety
+    // userStats.stats.forEach(stat => console.log(stat.album.name, stat.rating));
   } catch (error) {
     console.error('Error fetching user album stats:', error);
   }
