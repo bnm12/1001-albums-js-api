@@ -1,11 +1,14 @@
 {
   "name": "app",
   "version": "1.0.0",
+  "private": false,
   "description": "A typescript typed JS api client for 1001 albums",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "lint": "eslint ."
   },
   "repository": {
@@ -19,6 +22,11 @@
     "url": "https://github.com/bnm12/1001-albums-js-api/issues"
   },
   "homepage": "https://github.com/bnm12/1001-albums-js-api#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
