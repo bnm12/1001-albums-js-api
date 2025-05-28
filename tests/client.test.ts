@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ApiClient } from '../src/client';
+import { AlbumsGeneratorClient } from '../src/client';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -263,8 +263,8 @@ const mockGroupData = {
 };
 
 
-describe('ApiClient', () => {
-  let client: ApiClient;
+describe('AlbumsGeneratorClient', () => {
+  let client: AlbumsGeneratorClient;
   let mockAxiosInstance: { get: jest.Mock };
 
   beforeEach(() => {
@@ -274,7 +274,7 @@ describe('ApiClient', () => {
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockedAxios.create.mockReturnValue(mockAxiosInstance as any); // Type assertion
-    client = new ApiClient();
+    client = new AlbumsGeneratorClient();
   });
 
   describe('getGroup', () => {
@@ -310,7 +310,7 @@ describe('ApiClient', () => {
 
     it('should use the provided baseURL', () => {
       const customBaseURL = 'http://custom.api.com';
-      new ApiClient(customBaseURL); // Instantiate new client with custom baseURL
+      new AlbumsGeneratorClient(customBaseURL); // Instantiate new client with custom baseURL
       // Check the latest call to mockedAxios.create
       expect(mockedAxios.create).toHaveBeenLastCalledWith({
         baseURL: customBaseURL,
@@ -570,7 +570,7 @@ describe('ApiClient', () => {
       mockAxiosInstance = { get: jest.fn().mockResolvedValue({ data: {} }) };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
-      client = new ApiClient(); // Re-initialize client to reset its internal state, including requestTimestamps
+      client = new AlbumsGeneratorClient(); // Re-initialize client to reset its internal state, including requestTimestamps
     });
 
     afterEach(() => {

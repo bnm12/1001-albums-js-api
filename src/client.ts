@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 
 const DEFAULT_BASE_URL = 'https://1001albumsgenerator.com/api/v1';
 
-export class ApiClient {
+export class AlbumsGeneratorClient {
   private axiosInstance: AxiosInstance;
   private requestTimestamps: number[] = [];
   private readonly RATE_LIMIT_COUNT = 3;

@@ -1,1 +1,1 @@
-export { ApiClient } from './client';
+export { AlbumsGeneratorClient } from './client';
