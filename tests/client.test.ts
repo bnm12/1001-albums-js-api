@@ -272,6 +272,7 @@ describe('ApiClient', () => {
     mockAxiosInstance = {
       get: jest.fn(),
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockedAxios.create.mockReturnValue(mockAxiosInstance as any); // Type assertion
     client = new ApiClient();
   });
@@ -557,6 +558,7 @@ describe('ApiClient', () => {
       jest.useFakeTimers();
       // Ensure each test starts with a fresh client and mockAxiosInstance
       mockAxiosInstance = { get: jest.fn().mockResolvedValue({ data: {} }) };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
       client = new ApiClient(); // Re-initialize client to reset its internal state, including requestTimestamps
     });
@@ -585,8 +587,6 @@ describe('ApiClient', () => {
     });
 
     it('should delay requests if over the rate limit and then proceed', async () => {
-      const initialTime = Date.now(); // jest.useFakeTimers() mocks Date.now()
-
       // Make 3 requests to fill the limit
       await client.getAlbumStats(); // T0
       jest.advanceTimersByTime(1000); // T0 + 1s

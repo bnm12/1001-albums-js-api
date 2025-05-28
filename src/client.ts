@@ -39,7 +39,7 @@ export class ApiClient {
     });
   }
 
-  public async getGroup(groupSlug: string): Promise<any> {
+  public async getGroup(groupSlug: string): Promise<unknown> {
     await this.handleRateLimit();
     try {
       const response = await this.axiosInstance.get(`/groups/${groupSlug}`);
@@ -51,7 +51,7 @@ export class ApiClient {
     }
   }
 
-  public async getAlbumInGroup(groupSlug: string, albumUuid: string): Promise<any> {
+  public async getAlbumInGroup(groupSlug: string, albumUuid: string): Promise<unknown> {
     await this.handleRateLimit();
     try {
       const response = await this.axiosInstance.get(`/groups/${groupSlug}/albums/${albumUuid}`);
@@ -63,7 +63,7 @@ export class ApiClient {
     }
   }
 
-  public async getProject(projectIdentifier: string): Promise<any> {
+  public async getProject(projectIdentifier: string): Promise<unknown> {
     await this.handleRateLimit();
     try {
       const response = await this.axiosInstance.get(`/projects/${projectIdentifier}`);
@@ -75,7 +75,7 @@ export class ApiClient {
     }
   }
 
-  public async getAlbumStats(): Promise<any> {
+  public async getAlbumStats(): Promise<unknown> {
     await this.handleRateLimit();
     try {
       const response = await this.axiosInstance.get('/albums/stats');
@@ -87,7 +87,7 @@ export class ApiClient {
     }
   }
 
-  public async getUserAlbumStats(): Promise<any> {
+  public async getUserAlbumStats(): Promise<unknown> {
     await this.handleRateLimit();
     try {
       const response = await this.axiosInstance.get('/user-albums/stats');

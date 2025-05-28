@@ -1,10 +1,15 @@
 module.exports = {
   testEnvironment: 'node',
   clearMocks: true,
+  roots: ['<rootDir>/tests'], // Look for tests only in the 'tests' directory
+  testMatch: [ // Explicitly match .ts test files
+    "**/__tests__/**/*.+(ts|tsx|js)",
+    "**/?(*.)+(spec|test).+(ts|tsx|js)"
+  ],
   transform: {
-    '^.+\\.tsx?$': '<rootDir>/node_modules/ts-jest', // Explicit path to ts-jest
+    '^.+\\.tsx?$': 'ts-jest', // Use ts-jest for TypeScript files
   },
-  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   // Automatically clear mock calls, instances and results before every test
   // collectCoverage: true, // Example: To enable coverage collection
   // coverageDirectory: "coverage", // Example: To specify coverage directory
