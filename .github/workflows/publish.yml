@@ -8,10 +8,22 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
+
+    - name: Extract version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+    - name: Update package.json version
+      run: |
+        echo "Using version from tag: ${{ env.VERSION }}"
+        npm version ${{ env.VERSION }} --no-git-tag-version --allow-same-version
+        # Optionally, print package.json to verify
+        cat package.json
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x' # Or your desired Node.js version

@@ -134,3 +134,72 @@ async function fetchUserAlbumStats() {
 // Example call
 // fetchUserAlbumStats();
 ```
+
+## Releasing
+
+This project uses GitHub Releases to manage versions. The NPM package version is automatically determined by the Git tag used when creating a GitHub Release.
+
+For example, creating a release with the tag `v1.2.3` will publish version `1.2.3` to NPM.
+
+## CDN Usage
+
+You can also use this library directly in the browser via CDN. We recommend using JSDelivr.
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/albums-generator-client@latest/dist/client.umd.js"></script>
+```
+You can replace `@latest` with a specific version number, for example `@1.0.0` (once versioning is established).
+
+### Example Usage
+
+Below is a basic HTML example demonstrating how to include and instantiate the client. Check your browser's developer console for output.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albums Generator Client CDN Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/albums-generator-client@latest/dist/client.umd.js"></script>
+</head>
+<body>
+    <h1>CDN Usage Example</h1>
+    <p>Check your browser's developer console for messages.</p>
+
+    <script>
+        if (typeof AlbumsGeneratorClient !== 'undefined') {
+          // Instantiate the client
+          // The constructor can take an optional API key: new AlbumsGeneratorClient('YOUR_API_KEY');
+          const client = new AlbumsGeneratorClient(); 
+          
+          console.log('AlbumsGeneratorClient successfully loaded and instantiated:', client);
+          
+          // You can now use client methods. For example, if a method like `client.getApiUrl()` exists:
+          // if (typeof client.getApiUrl === 'function') {
+          //   console.log('API Base URL:', client.getApiUrl());
+          // }
+
+          // Example of calling a method (ensure the method exists and you handle promises):
+          /*
+          client.getAlbumStats() // Assuming getAlbumStats is a valid method
+            .then(stats => {
+              console.log('Album stats:', stats);
+              alert('Successfully fetched album stats! Check console.');
+            })
+            .catch(error => {
+              console.error('Error fetching album stats:', error);
+              alert('Error fetching album stats. Check console.');
+            });
+          */
+          
+          alert('AlbumsGeneratorClient loaded! Check the console for the client object and messages.');
+
+        } else {
+          console.error('AlbumsGeneratorClient is not loaded!');
+          alert('Error: AlbumsGeneratorClient is not loaded! Check that the script URL is correct.');
+        }
+    </script>
+</body>
+</html>
+```
