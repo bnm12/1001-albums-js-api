@@ -135,12 +135,6 @@ async function fetchUserAlbumStats() {
 // fetchUserAlbumStats();
 ```
 
-## Releasing
-
-This project uses GitHub Releases to manage versions. The NPM package version is automatically determined by the Git tag used when creating a GitHub Release.
-
-For example, creating a release with the tag `v1.2.3` will publish version `1.2.3` to NPM.
-
 ## CDN Usage
 
 You can also use this library directly in the browser via CDN. We recommend using JSDelivr.
@@ -203,3 +197,9 @@ Below is a basic HTML example demonstrating how to include and instantiate the c
 </body>
 </html>
 ```
+
+## Releasing
+
+This project uses GitHub Releases to manage versions. The NPM package version is automatically determined by the Git tag used when creating a GitHub Release.
+
+For example, creating a release with the tag `v1.2.3` will publish version `1.2.3` to NPM.
