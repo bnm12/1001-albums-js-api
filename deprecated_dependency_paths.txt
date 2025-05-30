@@ -1,0 +1,14 @@
+The `npm ls --all` output was saved to `npm-ls-all.txt`.
+
+Analysis of deprecated dependencies:
+
+1.  **`inflight@1.0.6`**
+    *   Warning: "This module is not supported, and leaks memory. Do not use it."
+    *   Path: `jest@29.7.0 -> @jest/core@29.7.0 -> @jest/reporters@29.7.0 -> glob@7.2.3 -> inflight@1.0.6`
+
+2.  **`glob@7.2.3`**
+    *   Warning: "Glob versions prior to v9 are no longer supported"
+    *   Primary Path: `jest@29.7.0 -> @jest/core@29.7.0 -> @jest/reporters@29.7.0 -> glob@7.2.3`
+    *   It is also a transitive dependency of `ts-jest` (via `@jest/transform -> babel-plugin-istanbul -> test-exclude`) and other `jest` internal packages, but these instances are typically deduped to use the one pulled in by `@jest/reporters`.
+
+These deprecated packages are transitive dependencies introduced by `jest@^29.7.0`. Resolving these warnings would likely require an update to `jest` itself, either to a newer version within the `^29.x.x` range that addresses these sub-dependencies, or to a newer major version of `jest`.
