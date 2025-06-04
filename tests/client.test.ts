@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AlbumsGeneratorClient } from '../src/client';
+import AlbumsGeneratorClient from '../src/client';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;

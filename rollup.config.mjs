@@ -10,6 +10,7 @@ export default {
     format: 'umd',
     name: 'AlbumsGeneratorClient', // This will be the global variable name
     sourcemap: true,
+    exports: 'default',
     globals: {
       // If you have external dependencies that you don't want to bundle,
       // you would list them here. For axios, we want it bundled.
