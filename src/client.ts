@@ -3,7 +3,7 @@ import { Group, AlbumInGroup, Project, AlbumStats, UserAlbumStats } from './type
 
 const DEFAULT_BASE_URL = 'https://1001albumsgenerator.com/api/v1';
 
-export default class AlbumsGeneratorClient {
+export class AlbumsGeneratorClient {
   private axiosInstance: AxiosInstance;
   private requestTimestamps: number[] = [];
   private readonly RATE_LIMIT_COUNT = 3;
