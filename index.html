@@ -32,8 +32,6 @@
     <script src="https://cdn.jsdelivr.net/npm/albums-generator-client@latest/dist/client.umd.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const client = new AlbumsGeneratorClient();
-
             const fetchButton = document.getElementById('fetchButton');
             const projectIdentifierInput = document.getElementById('projectIdentifier');
             const responseArea = document.getElementById('responseArea');
@@ -50,7 +48,7 @@
                 responseArea.classList.remove('error');
 
                 try {
-                    const data = await client.getProject(projectId);
+                    const data = await AlbumsGeneratorClient.getProject(projectId);
                     responseArea.textContent = JSON.stringify(data, null, 2);
                 } catch (error) {
                     console.error('Error fetching project data:', error);
