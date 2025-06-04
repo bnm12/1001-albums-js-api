@@ -146,6 +146,7 @@ You can replace `@latest` with a specific version number, for example `@1.0.0` (
 
 ### Example Usage
 
+For a demo page uring the UDM module from jsdeliver [look here](https://bnm12.github.io/1001-albums-js-api/) the source code can be found [here in index.html](https://github.com/bnm12/1001-albums-js-api/blob/main/index.html)
 Below is a basic HTML example demonstrating how to include and instantiate the client. Check your browser's developer console for output.
 
 ```html
@@ -164,19 +165,13 @@ Below is a basic HTML example demonstrating how to include and instantiate the c
     <script>
         if (typeof AlbumsGeneratorClient !== 'undefined') {
           // Instantiate the client
-          // The constructor can take an optional API key: new AlbumsGeneratorClient('YOUR_API_KEY');
           const client = new AlbumsGeneratorClient(); 
           
           console.log('AlbumsGeneratorClient successfully loaded and instantiated:', client);
-          
-          // You can now use client methods. For example, if a method like `client.getApiUrl()` exists:
-          // if (typeof client.getApiUrl === 'function') {
-          //   console.log('API Base URL:', client.getApiUrl());
-          // }
 
           // Example of calling a method (ensure the method exists and you handle promises):
           /*
-          client.getAlbumStats() // Assuming getAlbumStats is a valid method
+          client.getAlbumStats()
             .then(stats => {
               console.log('Album stats:', stats);
               alert('Successfully fetched album stats! Check console.');
