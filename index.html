@@ -29,7 +29,7 @@
         <pre id="responseArea"></pre>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/albums-generator-client@latest/dist/client.umd.js"></script>
+    <script src="./dist/client.umd.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const fetchButton = document.getElementById('fetchButton');
@@ -48,7 +48,8 @@
                 responseArea.classList.remove('error');
 
                 try {
-                    const data = await AlbumsGeneratorClient.getProject(projectId);
+                    const client = new AlbumsGeneratorClient();
+                    const data = await client.getProject(projectId);
                     responseArea.textContent = JSON.stringify(data, null, 2);
                 } catch (error) {
                     console.error('Error fetching project data:', error);

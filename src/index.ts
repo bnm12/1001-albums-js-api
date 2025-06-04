@@ -1,2 +1,2 @@
-export { AlbumsGeneratorClient } from './client';
+export { default } from './client';
 export * from './types';
