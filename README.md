@@ -27,6 +27,8 @@ const client = new AlbumsGeneratorClient();
 // const customClient = new AlbumsGeneratorClient('https://your-api-domain.com/api/v1');
 ```
 
+The client includes a simple rate-limiting feature to prevent abuse. It allows for up to 3 requests per minute. If you exceed this limit, the client will automatically pause further requests until the minute window has passed.
+
 Here are examples of how to use the available methods. These methods now return Promises with specific TypeScript types, providing type safety and autocompletion for the response data.
 
 ### Get Group Details
@@ -146,8 +148,7 @@ You can replace `@latest` with a specific version number, for example `@1.0.0` (
 
 ### Example Usage
 
-For a demo page uring the UDM module from jsdeliver [look here](https://bnm12.github.io/1001-albums-js-api/) the source code can be found [here in index.html](https://github.com/bnm12/1001-albums-js-api/blob/main/index.html)
-Below is a basic HTML example demonstrating how to include and instantiate the client. Check your browser's developer console for output.
+A live demo page using the UMD module from JSDelivr can be found [here](https://bnm12.github.io/1001-albums-js-api/), with its source code available [here](https://github.com/bnm12/1001-albums-js-api/blob/main/index.html). Below is an example demonstrating how to include and use the client in an HTML page:
 
 ```html
 <!DOCTYPE html>
@@ -155,39 +156,64 @@ Below is a basic HTML example demonstrating how to include and instantiate the c
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Albums Generator Client CDN Test</title>
+    <title>Albums Generator Client Demo</title>
     <script src="https://cdn.jsdelivr.net/npm/albums-generator-client@latest/dist/client.umd.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input[type="text"] { padding: 10px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; width: calc(100% - 180px); display: inline-block; vertical-align: middle; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; display: inline-block; vertical-align: middle; }
+        button:hover { background-color: #0056b3; }
+        pre { background-color: #eee; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; }
+        .error { color: red; }
+    </style>
 </head>
 <body>
-    <h1>CDN Usage Example</h1>
-    <p>Check your browser's developer console for messages.</p>
+    <div class="container">
+        <h1>Albums Generator Client CDN Demo</h1>
+        <p>
+            Enter a project identifier (e.g., "1001-albums-you-must-hear-before-you-die")
+            and click "Fetch Project Data". The client is available globally as <code>AlbumsGeneratorClient</code>.
+        </p>
+        <div>
+            <input type="text" id="projectIdentifier" placeholder="Enter project identifier" value="1001-albums-you-must-hear-before-you-die">
+            <button id="fetchButton">Fetch Project Data</button>
+        </div>
+        <h2>API Response:</h2>
+        <pre id="responseArea">Click the button to fetch data.</pre>
+    </div>
 
     <script>
-        if (typeof AlbumsGeneratorClient !== 'undefined') {
-          // Instantiate the client
-          const client = new AlbumsGeneratorClient(); 
-          
-          console.log('AlbumsGeneratorClient successfully loaded and instantiated:', client);
+        document.addEventListener('DOMContentLoaded', () => {
+            const fetchButton = document.getElementById('fetchButton');
+            const projectIdentifierInput = document.getElementById('projectIdentifier');
+            const responseArea = document.getElementById('responseArea');
 
-          // Example of calling a method (ensure the method exists and you handle promises):
-          /*
-          client.getAlbumStats()
-            .then(stats => {
-              console.log('Album stats:', stats);
-              alert('Successfully fetched album stats! Check console.');
-            })
-            .catch(error => {
-              console.error('Error fetching album stats:', error);
-              alert('Error fetching album stats. Check console.');
+            // The AlbumsGeneratorClient is available globally when using the CDN UMD module.
+            const client = new AlbumsGeneratorClient();
+
+            fetchButton.addEventListener('click', async () => {
+                const projectId = projectIdentifierInput.value.trim();
+                if (!projectId) {
+                    responseArea.textContent = 'Please enter a project identifier.';
+                    responseArea.classList.add('error');
+                    return;
+                }
+
+                responseArea.textContent = 'Loading...';
+                responseArea.classList.remove('error');
+
+                try {
+                    // Example: Fetch project data
+                    const data = await client.getProject(projectId);
+                    responseArea.textContent = JSON.stringify(data, null, 2);
+                } catch (error) {
+                    console.error('Error fetching project data:', error);
+                    responseArea.textContent = `Error: ${error.message || 'Failed to fetch data. See console for details.'}`;
+                    responseArea.classList.add('error');
+                }
             });
-          */
-          
-          alert('AlbumsGeneratorClient loaded! Check the console for the client object and messages.');
-
-        } else {
-          console.error('AlbumsGeneratorClient is not loaded!');
-          alert('Error: AlbumsGeneratorClient is not loaded! Check that the script URL is correct.');
-        }
+        });
     </script>
 </body>
 </html>
