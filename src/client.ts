@@ -8,30 +8,58 @@ export class AlbumsGeneratorClient {
   private requestTimestamps: number[] = [];
   private readonly RATE_LIMIT_COUNT = 3;
   private readonly RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+  private readonly MIN_REQUEST_INTERVAL_MS = 11 * 1000; // 11 seconds
 
   private async handleRateLimit(): Promise<void> {
     const currentTime = Date.now();
-    // Remove timestamps older than the rate limit window
-    this.requestTimestamps = this.requestTimestamps.filter(
+
+    // Rule 1: Minimum 11-second interval between requests
+    let waitTimePerRequestRule = 0;
+    if (this.requestTimestamps.length > 0) {
+      const lastRequestTime = this.requestTimestamps[this.requestTimestamps.length - 1];
+      const timeSinceLastRequest = currentTime - lastRequestTime;
+      if (timeSinceLastRequest < this.MIN_REQUEST_INTERVAL_MS) {
+        waitTimePerRequestRule = this.MIN_REQUEST_INTERVAL_MS - timeSinceLastRequest;
+      }
+    }
+
+    // Rule 2: Max 3 requests per minute
+    // Filter timestamps to consider only those within the rate limit window for this rule
+    const relevantTimestampsForMinuteRule = this.requestTimestamps.filter(
       (timestamp) => currentTime - timestamp < this.RATE_LIMIT_WINDOW_MS
     );
 
-    if (this.requestTimestamps.length >= this.RATE_LIMIT_COUNT) {
-      const oldestRequestTime = this.requestTimestamps[0]; // Should be the oldest after filtering
-      const timePassedSinceOldestRequest = currentTime - oldestRequestTime;
-      const waitTime = this.RATE_LIMIT_WINDOW_MS - timePassedSinceOldestRequest;
-
-      if (waitTime > 0) {
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-      }
-      // After waiting, filter again as the window has shifted
-      const newCurrentTime = Date.now();
-      this.requestTimestamps = this.requestTimestamps.filter(
-        (timestamp) => newCurrentTime - timestamp < this.RATE_LIMIT_WINDOW_MS
-      );
+    let waitTimePerMinuteRule = 0;
+    if (relevantTimestampsForMinuteRule.length >= this.RATE_LIMIT_COUNT) {
+      // The oldest request within the window that counts towards the limit
+      const oldestRelevantRequestTime = relevantTimestampsForMinuteRule[0];
+      const timePassedSinceOldestRelevantRequest = currentTime - oldestRelevantRequestTime;
+      // Wait until this oldest request is outside the window
+      waitTimePerMinuteRule = Math.max(0, this.RATE_LIMIT_WINDOW_MS - timePassedSinceOldestRelevantRequest);
     }
-    // Add the current request's timestamp
-    this.requestTimestamps.push(Date.now());
+
+    // Determine the final wait time (longer of the two rules)
+    const finalWaitTime = Math.max(waitTimePerRequestRule, waitTimePerMinuteRule);
+
+    if (finalWaitTime > 0) {
+      await new Promise(resolve => setTimeout(resolve, finalWaitTime));
+    }
+
+    // Record the timestamp of when this request is effectively being made (after any wait)
+    const effectiveRequestTime = Date.now();
+    this.requestTimestamps.push(effectiveRequestTime);
+
+    // Prune timestamps: Remove timestamps older than the rate limit window (RATE_LIMIT_WINDOW_MS)
+    // This keeps the array relevant for the next "3 per minute" check.
+    // It's important this happens after pushing the new timestamp.
+    this.requestTimestamps = this.requestTimestamps.filter(
+      (timestamp) => Date.now() - timestamp < this.RATE_LIMIT_WINDOW_MS
+    );
+    // Ensure the array doesn't grow excessively if requests are very sparse
+    // by only keeping the most recent ones relevant for RATE_LIMIT_COUNT,
+    // but the filter above should generally handle it for the 3/min rule.
+    // If MIN_REQUEST_INTERVAL_MS was much larger than RATE_LIMIT_WINDOW_MS, this might need more thought.
+    // For now, the above filter is consistent with original intent for the minute-based window.
   }
 
   constructor(baseURL: string = DEFAULT_BASE_URL) {

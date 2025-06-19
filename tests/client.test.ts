@@ -578,117 +578,267 @@ describe('AlbumsGeneratorClient', () => {
       jest.clearAllMocks(); // Clear mocks including setTimeout
     });
 
-    it('should allow requests if under the rate limit', async () => {
+    it('should allow requests if under the rate limit, respecting 11s rule', async () => {
       const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
-      // Make 2 requests (limit is 3 per minute)
+      // Call 1: Effective T=0. No delay.
       await client.getAlbumStats();
-      await client.getAlbumStats();
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
 
-      expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), expect.anything()); // Or check for calls with >0ms
+      // Call 2: Attempted T=0 (immediately after Call 1 finishes).
+      // 11s rule: wait 11s. 3/min rule: no wait. Final wait: 11s.
+      // Effective T for Call 2 = 0 + 11s = 11s.
+      const promise2 = client.getAlbumStats();
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 11000);
+      jest.advanceTimersByTime(11000);
+      await promise2;
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
       
-      // Making the 3rd call
-      await client.getAlbumStats();
-      expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), expect.anything());
+      // Call 3: Attempted T=11s (immediately after Call 2 finishes).
+      // 11s rule: wait 11s. 3/min rule: no wait. Final wait: 11s.
+      // Effective T for Call 3 = 11s + 11s = 22s.
+      const promise3 = client.getAlbumStats();
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(2); // Total calls to setTimeout
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 11000);
+      jest.advanceTimersByTime(11000);
+      await promise3;
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3);
 
-      setTimeoutSpy.mockRestore();
+      setTimeoutSpy.mockRestore(); // Restore spy for this test
     });
 
-    it('should delay requests if over the rate limit and then proceed', async () => {
-      // Make 3 requests to fill the limit
-      await client.getAlbumStats(); // T0
-      jest.advanceTimersByTime(1000); // T0 + 1s
-      await client.getAlbumStats(); // T0 + 1s
-      jest.advanceTimersByTime(1000); // T0 + 2s
-      await client.getAlbumStats(); // T0 + 2s
+    it('should delay requests if over the rate limit and then proceed, respecting all rules', async () => {
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+      // Call 1: Effective T=0. No delay.
+      await client.getAlbumStats(); // TS: [0]
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
+
+      // Advance base time by 1s. Call 2 attempted at T=1s.
+      jest.advanceTimersByTime(1000);
+      // 11s rule: lastRT=0, sinceLast=1s => wait 10s. 3/min rule: no wait. Final: 10s.
+      // Effective T for Call 2 = 1s + 10s = 11s.
+      const promise2 = client.getAlbumStats(); // TS: [0, 11k]
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 10000);
+      jest.advanceTimersByTime(10000);
+      await promise2;
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
       
+      // Advance base time. Prev call ended at T=11s. Advance by 1s. Call 3 attempted at T=12s.
+      jest.advanceTimersByTime(1000);
+      // 11s rule: lastRT=11k, sinceLast=1s (12k-11k) => wait 10s. 3/min rule: no wait. Final: 10s.
+      // Effective T for Call 3 = 12s + 10s = 22s.
+      const promise3 = client.getAlbumStats(); // TS: [0, 11k, 22k]
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 10000);
+      jest.advanceTimersByTime(10000);
+      await promise3;
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3);
 
-      // The 4th request should be delayed
-      const fourthCallPromise = client.getAlbumStats();
+      // Call 4: Attempted T=22s (immediately after Call 3 finishes).
+      // 11s rule: lastRT=22k, sinceLast=0 => wait 11s.
+      // 3/min rule: TS=[0,11k,22k]. Oldest=0. Passed=22k. Wait = 60k-22k = 38k.
+      // Final wait = max(11k, 38k) = 38k.
+      const promise4 = client.getAlbumStats();
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3); // Not yet called
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(3);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 38000);
 
-      // Should not have been called yet as it's waiting
-      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3);
-
-      // Advance time so that the first request (T0) is now older than 1 minute
-      // The first request was at initialTime. We need to advance past initialTime + 60000.
-      // Current time is initialTime + 2000ms.
-      // So advance by (60000 - 2000) + a small buffer (e.g., 10ms)
-      jest.advanceTimersByTime((60 * 1000 - 2000) + 10); 
-      
-      await fourthCallPromise; // Now the promise should resolve
+      // Advance time by the required 38s for Call 4 to proceed.
+      // Original test advanced by 58010ms from T=2s base, which is fine as it covers 38s.
+      jest.advanceTimersByTime(38000);
+      await promise4;
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(4);
+      setTimeoutSpy.mockRestore(); // Restore spy for this test
     });
 
-    it('should correctly manage timestamps and allow subsequent requests after window passes', async () => {
-      // Call 1, 2, 3
-      await client.getAlbumStats(); // Timestamp 1: 0s
-      jest.advanceTimersByTime(10 * 1000); // Advance by 10s
-      await client.getAlbumStats(); // Timestamp 2: 10s
-      jest.advanceTimersByTime(10 * 1000); // Advance by 10s (total 20s)
-      await client.getAlbumStats(); // Timestamp 3: 20s
-      
+    it('should correctly manage timestamps and allow subsequent requests after window passes under combined rules', async () => {
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+      let expectedSetTimeoutCallsWithPositiveDelay = 0;
+
+      // Call 1: Attempted T=0. Effective T=0.
+      // Expect no delay.
+      await client.getAlbumStats(); // Axios Call 1
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(expectedSetTimeoutCallsWithPositiveDelay);
+
+      // Advance base time by 10s. Call 2 Attempted T=10s.
+      jest.advanceTimersByTime(10 * 1000); // Current base time for Date.now() = 10s
+      // Expected delay: 11s rule (11000-10000=1000ms). 3/min rule (no wait). Final: 1000ms.
+      // Effective T for Call 2 = 10s + 1s = 11s.
+      const promise2 = client.getAlbumStats(); // Axios Call 2
+      expectedSetTimeoutCallsWithPositiveDelay++;
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(expectedSetTimeoutCallsWithPositiveDelay);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 1000);
+      jest.advanceTimersByTime(1000); // Advance by wait time
+      await promise2;
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
+
+      // Advance base time. Prev call ended at T=11s. Advance by 10s. Call 3 Attempted T=21s.
+      jest.advanceTimersByTime(10 * 1000); // Current base time for Date.now() = 11s + 10s = 21s
+      // Expected delay: 11s rule (11000-10000=1000ms). 3/min rule (no wait). Final: 1000ms.
+      // Effective T for Call 3 = 21s + 1s = 22s.
+      const promise3 = client.getAlbumStats(); // Axios Call 3
+      expectedSetTimeoutCallsWithPositiveDelay++;
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(expectedSetTimeoutCallsWithPositiveDelay);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 1000);
+      jest.advanceTimersByTime(1000); // Advance by wait time
+      await promise3;
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3);
 
-      // Call 4 (at 30s) - should be delayed, waiting for Timestamp 1 (at 0s) to expire
-      jest.advanceTimersByTime(10 * 1000); // Advance by 10s (total 30s)
-      const call4Promise = client.getAlbumStats();
-      // Check that it hasn't executed yet
-      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3); 
+      // Advance base time. Prev call ended at T=22s. Advance by 10s. Call 4 Attempted T=32s.
+      jest.advanceTimersByTime(10 * 1000); // Current base time for Date.now() = 22s + 10s = 32s
+      // Expected delay: 11s rule (11000-10000=1000ms). 3/min rule (TS: [0,11,22] at 32s -> oldest=0, passed=32s => wait 28000ms). Final: 28000ms.
+      // Effective T for Call 4 = 32s + 28s = 60s.
+      const promise4 = client.getAlbumStats(); // Axios Call 4
+      expectedSetTimeoutCallsWithPositiveDelay++;
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(expectedSetTimeoutCallsWithPositiveDelay);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 28000);
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3); // Not yet called
+      jest.advanceTimersByTime(28000); // Advance by wait time.
+      await promise4;
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(4);
 
-      // Advance time to 60.01s. Timestamp 1 (0s) expires. Call 4 proceeds.
-      jest.advanceTimersByTime(30 * 1000 + 10); // Advance by 30.01s (total 60.01s)
-      await call4Promise;
-      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(4); // Call 4 executed
-
-      // At this point (60.01s), active timestamps are: 10s, 20s, 60.01s (from call 4)
-      // Call 5 (at 60.01s) - should proceed immediately as we have 3 requests in last minute
-      // Wait, no, the previous logic for Call 4 was based on it being made at T=30s.
-      // Let's re-evaluate.
-      // T=0: Call 1. Timestamps: [0]
-      // T=10: Call 2. Timestamps: [0, 10]
-      // T=20: Call 3. Timestamps: [0, 10, 20]
-      // T=30: Call 4 (attempted). Timestamps: [0, 10, 20]. Length is 3. Oldest is 0.
-      //         Wait time = (60000 - (30000 - 0)) = 30000ms.
-      //         So call 4 will execute at T = 30000 + 30000 = 60000ms.
-      //         After call 4: Timestamps [10, 20, 60] (assuming 0 gets filtered out when 60 is added)
-
-      // Call 5 (attempted at T=60.01s, immediately after call 4 completes)
-      // Timestamps before call 5: [10, 20, 60.01(from call 4)]. Length 3. Oldest is 10.
-      // Wait time = (60000 - (60010 - 10000)) = 60000 - 50010 = 9990ms.
-      // So call 5 will execute at T = 60010 + 9990 = 70000ms.
-      const call5Promise = client.getAlbumStats();
-      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(4); // Still 4, call 5 is waiting
-
-      jest.advanceTimersByTime(10 * 1000); // Advance to 70.01s
-      await call5Promise;
-      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(5); // Call 5 executed
-
-      // Timestamps before call 6: [20, 60.01, 70.01]. Length is 3. Oldest is 20.
-      // Call 6 (attempted at T=70.01s)
-      // Wait time = (60000 - (70010 - 20000)) = 60000 - 50010 = 9990ms.
-      // So call 6 will execute at T = 70010 + 9990 = 80000ms
-      const call6Promise = client.getAlbumStats();
+      // Advance base time. Prev call ended at T=60s. Advance by 30.01s. Call 5 Attempted T=90.01s.
+      jest.advanceTimersByTime(30 * 1000 + 10); // Current base time for Date.now() = 60s + 30.01s = 90.01s
+      // Expected delay: 11s rule (sinceLast=30.01s > 11s -> no wait). 3/min rule (relevantTS for 90.01s is [60s] -> no wait). Final: 0ms.
+      // Effective T for Call 5 = 90.01s.
+      await client.getAlbumStats(); // Axios Call 5
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(expectedSetTimeoutCallsWithPositiveDelay); // No new positive delay call
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(5);
 
-      jest.advanceTimersByTime(10 * 1000); // Advance to 80.01s
-      await call6Promise;
+      // Advance base time. Prev call ended at T=90.01s. Advance by 10s. Call 6 Attempted T=100.01s.
+      jest.advanceTimersByTime(10 * 1000); // Current base time for Date.now() = 90.01s + 10s = 100.01s
+      // Expected delay: 11s rule (sinceLast=10s -> wait 1s). 3/min rule (relevantTS for 100.01s is [60s, 90.01s] -> no wait). Final: 1000ms.
+      // Effective T for Call 6 = 100.01s + 1s = 101.01s.
+      const promise6 = client.getAlbumStats(); // Axios Call 6
+      expectedSetTimeoutCallsWithPositiveDelay++;
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(expectedSetTimeoutCallsWithPositiveDelay);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 1000);
+      jest.advanceTimersByTime(1000); // Advance by wait time
+      await promise6;
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(6);
 
-
-      // Now all original timestamps (0,10,20) are gone.
-      // Timestamps before call 7: [60.01, 70.01, 80.01]
-      // Call 7 (at 80.01s) should be delayed until 60.01 expires (at 120s)
-      const call7Promise = client.getAlbumStats();
-      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(6);
-
-      // Advance until 60.01s timestamp expires. Current time is 80.01s.
-      // Need to advance by (60000 - (80010 - 60010)) + 10ms = (60000 - 20000) + 10ms = 40010ms
-      jest.advanceTimersByTime(40 * 1000 + 10); // Total time = 120.02s
-      await call7Promise;
+      // Advance base time. Prev call ended at T=101.01s. Advance by 10s. Call 7 Attempted T=111.01s.
+      jest.advanceTimersByTime(10 * 1000); // Current base time for Date.now() = 101.01s + 10s = 111.01s
+      // Expected delay: 11s rule (sinceLast=10s -> wait 1s).
+      // 3/min rule (TS for 111.01s is [60s, 90.01s, 101.01s]. Oldest=60s. Passed=51.01s. Wait = 60s-51.01s = 8990ms).
+      // Final wait = max(1000ms, 8990ms) = 8990ms.
+      // Effective T for Call 7 = 111.01s + 8.99s = 120s.
+      const promise7 = client.getAlbumStats(); // Axios Call 7
+      expectedSetTimeoutCallsWithPositiveDelay++;
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(expectedSetTimeoutCallsWithPositiveDelay);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 8990);
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(6); // Not yet called
+      jest.advanceTimersByTime(8990); // Advance by wait time.
+      await promise7;
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(7);
+
+      setTimeoutSpy.mockRestore(); // Restore spy for this test
+    });
+  });
+
+  describe('Rate Limiting - 11-second rule', () => {
+    let setTimeoutSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      // Ensure each test starts with a fresh client and mockAxiosInstance
+      mockAxiosInstance = { get: jest.fn().mockResolvedValue({ data: {} }) };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
+      client = new AlbumsGeneratorClient();
+      setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    });
+
+    afterEach(() => {
+      setTimeoutSpy.mockRestore();
+      jest.clearAllMocks(); // Clear other mocks like axios.create, axiosInstance.get
+      jest.useRealTimers();
+    });
+
+    it('should delay the second request if made less than 11 seconds after the first', async () => {
+      // Call 1
+      await client.getAlbumStats(); // Effective T = 0
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), expect. يزيد عن(0)); // Check not called with any value > 0
+
+      // Advance time by 5 seconds
+      jest.advanceTimersByTime(5 * 1000); // Current time T = 5s
+
+      // Call 2 (attempted at T=5s)
+      const promise2 = client.getAlbumStats();
+      
+      // setTimeout should be called to wait for the remaining 11 - 5 = 6 seconds
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 6 * 1000);
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1); // Still 1, as 2nd call is waiting
+
+      // Advance time by the remaining 6 seconds
+      jest.advanceTimersByTime(6 * 1000); // Current time T = 5 + 6 = 11s
+      await promise2; // Now the second call should proceed
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not delay the second request if made more than 11 seconds after the first (and not hitting other limits)', async () => {
+      // Call 1
+      await client.getAlbumStats(); // Effective T = 0
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), expect. يزيد عن(0));
+
+      // Advance time by 12 seconds (more than MIN_REQUEST_INTERVAL_MS)
+      jest.advanceTimersByTime(12 * 1000); // Current time T = 12s
+
+      // Call 2 (attempted at T=12s)
+      await client.getAlbumStats();
+
+      // setTimeout should not have been called for a delay related to the 11s rule
+      // It might be called with 0ms if finalWaitTime is 0, but not with a positive value for this rule.
+      // Let's check it wasn't called with a value > 0.
+      // If finalWaitTime > 0, setTimeout is called. Otherwise, it's not.
+      // For this test, no delay is expected from any rule.
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2); // Second call should proceed immediately
+    });
+
+    it('should prioritize the 3/minute rule when it is stricter than the 11-second rule', async () => {
+      // Call 1: T=0s
+      await client.getAlbumStats(); // Effective T=0. Timestamps: [0]
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
+      expect(setTimeoutSpy).not.toHaveBeenCalled();
+
+      // Call 2: Attempted T=12s (advancing by 12s)
+      jest.advanceTimersByTime(12 * 1000); // Current T = 12s
+      await client.getAlbumStats(); // 11s rule: 12s > 11s, no wait. 3/min rule: 2nd req, no wait. Effective T=12s. Timestamps: [0, 12000]
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
+      expect(setTimeoutSpy).not.toHaveBeenCalled(); // No new calls to setTimeout
+
+      // Call 3: Attempted T=24s (advancing by another 12s)
+      jest.advanceTimersByTime(12 * 1000); // Current T = 24s
+      await client.getAlbumStats(); // 11s rule: 12s > 11s, no wait. 3/min rule: 3rd req, no wait. Effective T=24s. Timestamps: [0, 12000, 24000]
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3);
+      expect(setTimeoutSpy).not.toHaveBeenCalled(); // No new calls to setTimeout
+
+      // Call 4: Attempted T=24s (immediately after 3rd call finishes)
+      // Current time for handleRateLimit is 24000ms.
+      // 11s rule: lastRequestTime=24000. timeSinceLastRequest=0. waitTimePerRequestRule = 11000ms.
+      // 3/min rule: relevantTimestamps=[0, 12000, 24000]. Oldest=0. timePassedSinceOldest=24000.
+      //             waitTimePerMinuteRule = 60000 - 24000 = 36000ms.
+      // finalWaitTime = Math.max(11000, 36000) = 36000ms.
+      const promise4 = client.getAlbumStats();
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3); // Not yet called
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(1); // First call to setTimeout in this test
+      expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 36000);
+
+      jest.advanceTimersByTime(36000); // Advance by 36s. Current T = 24s + 36s = 60s
+      await promise4; // Call 4 proceeds
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(4);
+       // Timestamps after call 4 (effective T=60s) and pruning: [12000, 24000, 60000]
     });
   });
 });
