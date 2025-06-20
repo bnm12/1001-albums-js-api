@@ -765,7 +765,7 @@ describe('AlbumsGeneratorClient', () => {
       // Call 1
       await client.getAlbumStats(); // Effective T = 0
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
-      expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), expect. يزيد عن(0)); // Check not called with any value > 0
+      expect(setTimeoutSpy).not.toHaveBeenCalled(); // Corrected: First call should not have positive delay
 
       // Advance time by 5 seconds
       jest.advanceTimersByTime(5 * 1000); // Current time T = 5s
@@ -789,7 +789,7 @@ describe('AlbumsGeneratorClient', () => {
       // Call 1
       await client.getAlbumStats(); // Effective T = 0
       expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
-      expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), expect. يزيد عن(0));
+      expect(setTimeoutSpy).not.toHaveBeenCalled(); // Corrected: First call should not have positive delay
 
       // Advance time by 12 seconds (more than MIN_REQUEST_INTERVAL_MS)
       jest.advanceTimersByTime(12 * 1000); // Current time T = 12s
